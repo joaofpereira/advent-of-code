@@ -1,7 +1,7 @@
 import sys
 
 def calculate_fuel(input):
-	return int(int(input) / 3 - 2)
+	return int(int(input) / 3) - 2
 
 def read_input():
 	input_list = []
