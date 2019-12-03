@@ -17,15 +17,22 @@ def transform_input(noun, verb, input):
 	input[2] = verb
 	return [int(i) for i in input]
 
-def exercise_1():
-	input = read_input('./input.txt')
+def process_instructions(input, target):
 	for i in range(0, len(input), 4):
 		if input[i] == 1:
-			input[input[i+3]] = opcode_1(input[input[i+1]], input[input[i+2]])
+			input[input[i + 3]] = opcode_1(input[input[i + 1]], input[input[i + 2]])
 		elif input[i] == 2:
-			input[input[i+3]] = opcode_2(input[input[i+1]], input[input[i+2]])
+			input[input[i + 3]] = opcode_2(input[input[i + 1]], input[input[i + 2]])
 		elif input[i] == 99:
-			break
+			if target != -1 and input[0] == target:
+				return True
+			else:
+				return False
+	return False
+
+def exercise_1():
+	input = read_input('./input.txt')
+	process_instructions(input, -1)
 	print("Exercise 1: " + str(input[0]))
 
 def exercise_2(target):
@@ -35,18 +42,9 @@ def exercise_2(target):
 		for z in range(0, 99):
 			copied = transform_input(i, z, input.copy())
 
-			for i_idx in range(0, len(copied), 4):
-				if copied[i_idx] == 1:
-					copied[copied[i_idx + 3]] = opcode_1(copied[copied[i_idx + 1]], copied[copied[i_idx + 2]])
-				elif copied[i_idx] == 2:
-					copied[copied[i_idx + 3]] = opcode_2(copied[copied[i_idx + 1]], copied[copied[i_idx + 2]])
-				elif copied[i_idx] == 99:
-					if copied[0] == target:
-						#print("Noun: " + str(copied[1]) + " Verb:" + str(copied[2]))
-						print("Exercise 2: " + str(100 * copied[1] + copied[2]))
-						exit(1)
-					else:
-						continue
+			if process_instructions(copied, target):
+				print("Exercise 2: " + str(100 * copied[1] + copied[2]))
+				exit(1)
 			z+=1
 		i+=1
 
