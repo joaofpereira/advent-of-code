@@ -267,6 +267,8 @@ def exercise_4_2():
             total_valids = total_valids + 1
     return total_valids
 
+def exercise_5_1():
+    return "Hello World"
 
 def main():
     #print(exercise_1_1())
@@ -276,7 +278,8 @@ def main():
     #print(exercise_3_1())
     #print(exercise_3_2())
     #print(exercise_4_1())
-    print(exercise_4_2())
+    #print(exercise_4_2())
+    print(exercise_5_1())
 
 
 if __name__ == "__main__":
