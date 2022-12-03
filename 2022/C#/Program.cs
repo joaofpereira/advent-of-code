@@ -1,0 +1,200 @@
+﻿using AdventOfCode;
+
+#region Day 1
+
+var input1 = Utils.ReadInput("./2022/1.txt");
+var elvesCalories = new List<int>();
+var currentElfCalories = 0;
+for(var i = 0; i < input1.Length; i++)
+{
+    if (string.IsNullOrEmpty(input1[i]))
+    {
+        elvesCalories.Add(currentElfCalories);
+        currentElfCalories = 0;
+        continue;
+    }
+        
+    currentElfCalories += int.Parse(input1[i]);
+}
+Console.WriteLine("Output 1.1: {0}", elvesCalories.Max());
+Console.WriteLine("Output 1.2: {0}", elvesCalories.OrderByDescending(v => v).Take(3).Sum());
+
+#endregion
+
+#region Day 2
+
+var input2 = Utils.ReadInput("./2022/2.txt");
+const int lossScore = 0;
+const int drawScore = 3;
+const int winScore = 6;
+var gameScores = new Dictionary<string, int>()
+{
+    { "A", 1 },
+    { "X", 1 },
+    { "B", 2 },
+    { "Y", 2 },
+    { "C", 3 },
+    { "Z", 3 },
+};
+
+bool IsSamePlay(string himChoice, string myChoice)
+{
+    if (himChoice == "A" && myChoice == "X") return true;
+    else if (himChoice == "B" && myChoice == "Y") return true;
+    else if (himChoice == "C" && myChoice == "Z") return true;
+    else return false;
+}
+
+int RockPaperScissorCalculator(string himChoice, string myChoice, Dictionary<string, int> gameScores)
+{
+    var myRoundScore = gameScores[myChoice];
+    if (IsSamePlay(himChoice, myChoice))
+        return myRoundScore + drawScore;
+
+    if (himChoice == "A")
+    {
+        if (myChoice == "Y")
+            return myRoundScore + winScore;
+        else
+            return myRoundScore + lossScore;
+    }
+    else if (himChoice == "B")
+    {
+        if (myChoice == "X")
+            return myRoundScore + lossScore;
+        else
+            return myRoundScore + winScore;
+    }
+    else
+    {
+        if (myChoice == "X")
+            return myRoundScore + winScore;
+        else
+            return myRoundScore + lossScore;
+    }
+}
+
+var myScore = 0;
+for (var i = 0; i < input2.Length; i++)
+{
+    var parts = input2[i].Split(' ');
+    myScore += RockPaperScissorCalculator(parts[0], parts[1], gameScores);
+}
+
+Console.WriteLine("Output 2.1: {0}", myScore);
+
+string RockPaperScissorAutoFiller(string himChoice, string expectedResult)
+{
+    // in case the final result is a draw we need to get the equivalent move
+    if (expectedResult == "Y")
+    {
+        if (himChoice == "A") // rock vs rock
+            return "X";
+        else if (himChoice == "B") // paper vs paper
+            return "Y";
+        else return "Z"; // scissor vs scissor
+    }
+    else if (expectedResult == "X")
+    {
+        if (himChoice == "A") // rock vs scissor
+            return "Z";
+        else if (himChoice == "B") // paper vs rock
+            return "X";
+        else return "Y"; // scissor vs paper 
+    }
+    else
+    {
+        if (himChoice == "A") // rock vs paper
+            return "Y";
+        else if (himChoice == "B") // paper vs scissor
+            return "Z";
+        else return "X"; // scissor vs rock
+    }
+}
+
+myScore = 0;
+for (var i = 0; i < input2.Length; i++)
+{
+    var parts = input2[i].Split(' ');
+    var myMove = RockPaperScissorAutoFiller(parts[0], parts[1]);
+    myScore += RockPaperScissorCalculator(parts[0], myMove, gameScores);
+}
+
+Console.WriteLine("Output 2.2: {0}", myScore);
+
+#endregion
+
+#region Day 3
+
+var input3 = Utils.ReadInput("./2022/3.txt");
+var firstCompartiments = new List<string>();
+var secondCompartiments = new List<string>();
+var sharedItemSum = 0;
+for (var i = 0; i < input3.Length; i++)
+{
+    var rucksackLength = input3[i].Length;
+    var compartimentLength = input3[i].Length / 2;
+    var firstCompartiment = input3[i].Substring(0, compartimentLength);
+    var secondCompartiment = input3[i].Substring(compartimentLength, compartimentLength);
+    firstCompartiments.Add(firstCompartiment);
+    secondCompartiments.Add(secondCompartiment);
+    var sharedItem = GetSharedItem(firstCompartiment, secondCompartiment);
+    if (sharedItem.HasValue)
+    {
+        var sharedItemPriority = GetSharedItemPriority(sharedItem.Value);
+        // Console.WriteLine(sharedItemPriority);
+        sharedItemSum += sharedItemPriority;
+    }
+}
+
+Console.WriteLine("Output 3.1: {0}", sharedItemSum);
+
+int GetSharedItemPriority(char item)
+{
+    const int fixedLowerCasePriority = 1;
+    const int fixedUpperCasePriority = 27;
+    var charValue = (int)item;
+
+    // 'a' is 97 so less than that is uppercase ('A' starts at 65)
+    if (charValue < 97)
+        return fixedUpperCasePriority + (charValue - (int) 'A');
+    else
+        return fixedLowerCasePriority + (charValue - (int) 'a');
+}
+
+char? GetSharedItem(string str1, string str2)
+{
+    for (var i = 0; i < str1.Length; i++)
+        for (var j = 0; j < str2.Length; j++)
+            if (str1[i] == str2[j])
+                return str1[i];
+    return null;
+}
+
+char? GetCommonBadge(string[] elvesGroup)
+{
+    for (var i = 0; i < elvesGroup[0].Length; i++)
+        for (var j = 0; j < elvesGroup[1].Length; j++)
+            for (var z = 0; z < elvesGroup[2].Length; z++)
+                if (elvesGroup[0][i] == elvesGroup[1][j] && elvesGroup[1][j] == elvesGroup[2][z])
+                    return elvesGroup[0][i];
+    return null;
+}
+
+var commonBadgeSum = 0;
+for (var i = 0; i < input3.Length; i += 3)
+{
+    var group = new string[] { input3[i], input3[i + 1], input3[i + 2] };
+    var commonBadge = GetCommonBadge(group);
+    // Console.WriteLine("Common Badge: {0}", commonBadge);
+    if (commonBadge.HasValue)
+    {
+        var sharedItemPriority = GetSharedItemPriority(commonBadge.Value);
+        // Console.WriteLine("Common Badge Priority: {0}", sharedItemPriority);
+        commonBadgeSum += sharedItemPriority;
+    }
+}
+
+Console.WriteLine("Output 3.2: {0}", commonBadgeSum);
+
+#endregion
