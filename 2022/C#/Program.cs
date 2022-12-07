@@ -1,4 +1,5 @@
 ﻿using AdventOfCode;
+using System.Linq;
 
 public static class Program
 {
@@ -8,7 +9,9 @@ public static class Program
         // Day2();
         // Day3();
         // Day4();
-        Day5();
+        // Day5();
+        // Day6();
+        Day7();
     }
 
     #region Day 1
@@ -291,7 +294,7 @@ public static class Program
 
     #region Day 5
 
-    private static LinkedList<char>[] CreateEmptyCrates(int numberOfCrates)
+    private static LinkedList<char>[] CreateEmptyCrateStacks(int numberOfCrates)
     {
         var crateStacks = new LinkedList<char>[numberOfCrates];
         for (var i = 0; i < crateStacks.Length; i++)
@@ -351,7 +354,7 @@ public static class Program
             previousLine = line;
         }
 
-        var crateStacks = CreateEmptyCrates(maxCrateStack);
+        var crateStacks = CreateEmptyCrateStacks(maxCrateStack);
         InitializeCrateStacks(crateStacksInput, crateStacks);
 
         foreach(var moveInput in movesInput)
@@ -374,7 +377,7 @@ public static class Program
 
         Console.WriteLine("Output 5.1: {0}", string.Join("", crateStacks.Select(c => c.Last.Value)));
 
-        crateStacks = CreateEmptyCrates(maxCrateStack);
+        crateStacks = CreateEmptyCrateStacks(maxCrateStack);
         InitializeCrateStacks(crateStacksInput, crateStacks);
 
         foreach (var moveInput in movesInput)
@@ -409,5 +412,52 @@ public static class Program
 
         Console.WriteLine("Output 5.2: {0}", string.Join("", crateStacks.Select(c => c.Last.Value)));
     }
+    #endregion
+
+    #region Day 6
+
+    private static int CalculateMarker(string message, int markerLength)
+    {
+        for (var i = 0; i < message.Length; i++)
+        {
+            // when surpassing the minimum required length to perform the marker
+            if (i == message.Length - (markerLength + 1))
+                return -1;
+
+            var charGroup = message.Substring(i, markerLength);
+            var hashSet = new HashSet<char>();
+            foreach (var c in charGroup)
+            {
+                if (hashSet.Contains(c))
+                {
+                    break;
+                }
+                else hashSet.Add(c);
+            }
+            if (hashSet.Count == markerLength)
+            {
+                return i + markerLength;
+            }
+        }
+
+        return -1;
+    }
+
+    public static void Day6()
+    {
+        var input6 = Utils.ReadInput("./2022/6.txt")[0];
+
+        Console.WriteLine("Output 6.1: {0}", CalculateMarker(input6, 4));
+        Console.WriteLine("Output 6.2: {0}", CalculateMarker(input6, 14));
+    }
+    #endregion
+
+    #region Day 7
+
+    public static void Day7()
+    {
+
+    }
+
     #endregion
 }
