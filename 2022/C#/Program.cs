@@ -418,6 +418,7 @@ public static class Program
 
     private static int CalculateMarker(string message, int markerLength)
     {
+        var hashSet = new HashSet<char>();
         for (var i = 0; i < message.Length; i++)
         {
             // when surpassing the minimum required length to perform the marker
@@ -425,11 +426,12 @@ public static class Program
                 return -1;
 
             var charGroup = message.Substring(i, markerLength);
-            var hashSet = new HashSet<char>();
+            
             foreach (var c in charGroup)
             {
                 if (hashSet.Contains(c))
                 {
+                    hashSet.Clear();
                     break;
                 }
                 else hashSet.Add(c);
