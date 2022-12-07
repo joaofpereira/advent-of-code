@@ -4,10 +4,11 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        Day1();
-        Day2();
-        Day3();
-        Day4();
+        // Day1();
+        // Day2();
+        // Day3();
+        // Day4();
+        Day5();
     }
 
     #region Day 1
@@ -289,9 +290,124 @@ public static class Program
     #endregion
 
     #region Day 5
+
+    private static LinkedList<char>[] CreateEmptyCrates(int numberOfCrates)
+    {
+        var crateStacks = new LinkedList<char>[numberOfCrates];
+        for (var i = 0; i < crateStacks.Length; i++)
+        {
+            crateStacks[i] = new LinkedList<char>();
+        }
+        return crateStacks;
+    }
+
+    private static void InitializeCrateStacks(IReadOnlyList<string> input, LinkedList<char>[] crateStacks)
+    {
+        var currentCrateStackIndex = 0;
+        foreach (var crateInputLine in input)
+        {
+            var lineIndex = 0;
+            while (lineIndex < crateInputLine.Length)
+            {
+                // whenever we see an empty space we move forward in the line to fill the next crate stack
+                if (crateInputLine[lineIndex] == ' ')
+                {
+                    lineIndex += 4;
+                    currentCrateStackIndex++;
+                    continue;
+                }
+                // if there's value we put the value of the next cell
+                crateStacks[currentCrateStackIndex].AddFirst(crateInputLine[lineIndex + 1]);
+                lineIndex += 4;
+                currentCrateStackIndex++;
+            }
+            currentCrateStackIndex = 0;
+        }
+    }
+
     public static void Day5()
     {
-        // var input5 = Utils.ReadInput("./2022/5.txt");
+        var input5 = Utils.ReadInput("./2022/5.txt");
+        var crateStacksInput = new List<string>();
+        var movesInput = new List<string>();
+        var wasEmptyLineRead = false;
+        var previousLine = string.Empty;
+        var maxCrateStack = 0;
+        foreach(var line in input5)
+        {
+            // here we reach the empty line and we can use the previous line to get the max stack crate in the input
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                wasEmptyLineRead = true;
+                maxCrateStack = previousLine.Split(' ').Where(c => string.IsNullOrWhiteSpace(c) == false).Select(c => int.Parse(c)).Max();
+                continue;
+            }
+                
+            if (!wasEmptyLineRead)
+                crateStacksInput.Add(line);
+            else
+                movesInput.Add(line);
+
+            previousLine = line;
+        }
+
+        var crateStacks = CreateEmptyCrates(maxCrateStack);
+        InitializeCrateStacks(crateStacksInput, crateStacks);
+
+        foreach(var moveInput in movesInput)
+        {
+            var parts = moveInput.Split(' ');
+            var numberOfCrates = int.Parse(parts[1]);
+            var fromStack = int.Parse(parts[3]) - 1;
+            var toStack = int.Parse(parts[5]) - 1;
+
+            for (var i = 0; i < numberOfCrates; i++)
+            {
+                var lastCrateOnStack = crateStacks[fromStack].Last;
+                if (lastCrateOnStack != null)
+                {
+                    crateStacks[fromStack].RemoveLast();
+                    crateStacks[toStack].AddLast(lastCrateOnStack);
+                }
+            }
+        }
+
+        Console.WriteLine("Output 5.1: {0}", string.Join("", crateStacks.Select(c => c.Last.Value)));
+
+        crateStacks = CreateEmptyCrates(maxCrateStack);
+        InitializeCrateStacks(crateStacksInput, crateStacks);
+
+        foreach (var moveInput in movesInput)
+        {
+            var parts = moveInput.Split(' ');
+            var numberOfCrates = int.Parse(parts[1]);
+            var fromStack = int.Parse(parts[3]) - 1;
+            var toStack = int.Parse(parts[5]) - 1;
+
+            var tempCrateStack = new LinkedList<char>();
+
+            for (var i = 0; i < numberOfCrates; i++)
+            {
+                var lastCrateOnStack = crateStacks[fromStack].Last;
+                if (lastCrateOnStack != null)
+                {
+                    crateStacks[fromStack].RemoveLast();
+                    tempCrateStack.AddFirst(lastCrateOnStack);
+                }
+            }
+
+            for(var i = 0; i < numberOfCrates; i++)
+            {
+                var firstCrateOnStack = tempCrateStack.First;
+                if (firstCrateOnStack != null)
+                {
+                    tempCrateStack.RemoveFirst();
+                    crateStacks[toStack].AddLast(firstCrateOnStack);
+                }
+            }
+        }
+
+        Console.WriteLine("Output 5.2: {0}", string.Join("", crateStacks.Select(c => c.Last.Value)));
     }
     #endregion
 }
