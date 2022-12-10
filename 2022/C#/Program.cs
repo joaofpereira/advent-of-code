@@ -1,5 +1,5 @@
 ﻿using AdventOfCode;
-using System.Linq;
+using System.Text;
 
 public static class Program
 {
@@ -11,7 +11,8 @@ public static class Program
         // Day4();
         // Day5();
         // Day6();
-        Day7();
+        // Day7();
+        Day8();
     }
 
     #region Day 1
@@ -336,7 +337,7 @@ public static class Program
         var wasEmptyLineRead = false;
         var previousLine = string.Empty;
         var maxCrateStack = 0;
-        foreach(var line in input5)
+        foreach (var line in input5)
         {
             // here we reach the empty line and we can use the previous line to get the max stack crate in the input
             if (string.IsNullOrWhiteSpace(line))
@@ -345,7 +346,7 @@ public static class Program
                 maxCrateStack = previousLine.Split(' ').Where(c => string.IsNullOrWhiteSpace(c) == false).Select(c => int.Parse(c)).Max();
                 continue;
             }
-                
+
             if (!wasEmptyLineRead)
                 crateStacksInput.Add(line);
             else
@@ -357,7 +358,7 @@ public static class Program
         var crateStacks = CreateEmptyCrateStacks(maxCrateStack);
         InitializeCrateStacks(crateStacksInput, crateStacks);
 
-        foreach(var moveInput in movesInput)
+        foreach (var moveInput in movesInput)
         {
             var parts = moveInput.Split(' ');
             var numberOfCrates = int.Parse(parts[1]);
@@ -399,7 +400,7 @@ public static class Program
                 }
             }
 
-            for(var i = 0; i < numberOfCrates; i++)
+            for (var i = 0; i < numberOfCrates; i++)
             {
                 var firstCrateOnStack = tempCrateStack.First;
                 if (firstCrateOnStack != null)
@@ -426,7 +427,7 @@ public static class Program
                 return -1;
 
             var charGroup = message.Substring(i, markerLength);
-            
+
             foreach (var c in charGroup)
             {
                 if (hashSet.Contains(c))
@@ -456,9 +457,250 @@ public static class Program
 
     #region Day 7
 
+    private abstract class Item
+    {
+        public string Name;
+        public int Size;
+
+        protected Item(string name, int size)
+        {
+            Name = name;
+            Size = size;
+        }
+
+        public abstract int GetSize();
+        public abstract string ToString(int level);
+    }
+
+    private class File : Item
+    {
+        public File(string name, int size) : base(name, size) { }
+        public override int GetSize() { return Size; }
+
+        public override string ToString(int level)
+        {
+            return $"{Tabs(level)}- {Name} (file, size={Size})";
+        }
+    }
+
+    private class Folder : Item
+    {
+        public List<Item> Items { get; set; }
+        public Folder Parent { get; set; }
+
+        public Folder(string name, int size = 0) : base(name, size)
+        {
+            Items = new List<Item>();
+        }
+
+        public Folder(Folder parent, string name, int size = 0) : base(name, size)
+        {
+            Parent = parent;
+            Items = new List<Item>();
+        }
+
+        public override int GetSize()
+        {
+            var totalSize = 0;
+            foreach (var item in Items)
+            {
+                totalSize += item.GetSize();
+            }
+            return totalSize;
+        }
+
+        public Folder CreateFolder(string folderName)
+        {
+            var folder = new Folder(this, folderName);
+            Items.Add(folder);
+            return folder;
+        }
+
+        public void CreateFile(string fileName, int size)
+        {
+            Items.Add(new File(fileName, size));
+        }
+
+        public override string ToString(int level)
+        {
+            var strBuilder = new StringBuilder();
+            strBuilder.AppendLine($"{Tabs(level)}- {Name} (dir)");
+            var innerLevel = level + 1;
+            foreach(var item in Items)
+            {
+                strBuilder.AppendLine($"{item.ToString(innerLevel)}");
+            }
+            return strBuilder.ToString().TrimEnd();
+        }
+
+        public IEnumerable<(string FolderName, int Size)> GetFolderAndInnerFolderInfo()
+        {
+            yield return (Name, GetSize());
+            // even if we dont return the current one, there might be some child folder that obeys the rule
+            foreach(var item in Items)
+            {
+                if (item is Folder innerFolder)
+                {
+                    foreach(var innerFolderItem in innerFolder.GetFolderAndInnerFolderInfo())
+                        yield return innerFolderItem;
+                }
+            }
+        }
+
+        public IEnumerable<int> GetInnerFolderSizes()
+        {
+            foreach (var item in Items)
+            {
+                if (item is Folder innerFolder)
+                {
+                    foreach(var innerSize in innerFolder.GetInnerFolderSizes())
+                        yield return innerSize;
+                }
+            }
+            yield return GetSize();
+        }
+    }
+
+    private class FileSystem
+    {
+        public const int TotalDiskSize = 70000000;
+
+        public List<Item> Items;
+        public Folder CurrentFolder;
+
+        public FileSystem()
+        {
+            Items = new List<Item>();
+        }
+
+        public override string ToString()
+        {
+            var strBuilder = new StringBuilder();
+            foreach(var item in Items)
+            {
+                strBuilder.AppendLine(item.ToString(0));
+            }
+            return strBuilder.ToString();
+        }
+
+        public IEnumerable<(string Folder, int Size)> GetFoldersOfAtMost(int? capSize)
+        {
+            foreach (var i in Items)
+            {
+                if (i is Folder innerFolder)
+                {
+                    foreach (var info in innerFolder.GetFolderAndInnerFolderInfo())
+                    {
+                        // if no cap size is passed we just return everything
+                        if (!capSize.HasValue || info.Size <= capSize)
+                        {
+                            // Console.WriteLine($"Folder: {info.FolderName}\nSize: {info.Size}");
+                            yield return info;
+                        }
+                    }
+                }
+            }
+        }
+
+        public int GetFolderSizes(int capSize)
+        {
+            var totalSize = 0;
+            foreach(var folderInfo in GetFoldersOfAtMost(capSize))
+            {
+                totalSize += folderInfo.Size;
+            }
+            return totalSize;
+        }
+
+        public int GetSize()
+        {
+            var size = 0;
+            foreach(var item in Items)
+            {
+                size += item.GetSize();
+            }
+            return size;
+        }
+
+        public int FindSmallestDirectoryToDelete(int requiredSpace)
+        {
+            var minDirectorySize = int.MaxValue;
+            var currentOccupiedSpace = GetSize();
+
+            foreach (var info in GetFoldersOfAtMost(null))
+            {
+                var newFreeSpace = TotalDiskSize - (currentOccupiedSpace - info.Size);
+                if (newFreeSpace >= requiredSpace && minDirectorySize > info.Size)
+                    minDirectorySize = info.Size;
+            }
+
+            return minDirectorySize;
+        }
+    }
+
+    static void ProcessCommand(FileSystem fileSystem, string command)
+    {
+        var parts = command.Split(' ');
+        switch(parts[0])
+        {
+            case "$":
+                ProcessCommand(fileSystem, string.Join(" ", parts.Where((v, i) => i > 0)));
+                break;
+            case "cd":
+                if (parts[1] == "..")
+                {
+                    if (fileSystem.CurrentFolder.Parent != null)
+                        fileSystem.CurrentFolder = fileSystem.CurrentFolder.Parent;
+                }
+                    
+                else if (fileSystem.CurrentFolder == null)
+                {
+                    var folder = new Folder(parts[1]);
+                    fileSystem.Items.Add(folder);
+                    fileSystem.CurrentFolder = folder;
+                }
+                else
+                {
+                    if (fileSystem.CurrentFolder.Items.FirstOrDefault(f => f.Name == parts[1]) is Folder folder)
+                        fileSystem.CurrentFolder = folder;
+                }
+                break;
+            case "dir":
+                fileSystem.CurrentFolder.CreateFolder(parts[1]);
+                break;
+            case "ls":
+                break;
+            default:
+                fileSystem.CurrentFolder.CreateFile(parts[1], int.Parse(parts[0]));
+                break;
+        }
+    }
+
+    static string Tabs(int n)
+    {
+        return new string('\t', n);
+    }
+
     public static void Day7()
     {
+        var input7 = Utils.ReadInput("./2022/7.txt");
+        var fileSystem = new FileSystem();
+        foreach(var command in input7)
+        {
+            ProcessCommand(fileSystem, command);
+        }
+        // Console.WriteLine(fileSystem.ToString());
+        Console.WriteLine("Output 7.1: {0}", fileSystem.GetFolderSizes(100000));
+        Console.WriteLine("Output 7.2: {0}", fileSystem.FindSmallestDirectoryToDelete(30000000));
+    }
 
+    #endregion
+
+    #region Day 8
+
+    public static void Day8()
+    {
+        var input8 = Utils.ReadInput("./2022/8.txt");
     }
 
     #endregion
