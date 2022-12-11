@@ -1,5 +1,4 @@
 ﻿using AdventOfCode;
-using System.Diagnostics;
 using System.Text;
 
 public static class Program
