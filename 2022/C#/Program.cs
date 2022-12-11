@@ -12,7 +12,8 @@ public static class Program
         // Day5();
         // Day6();
         // Day7();
-        Day8();
+        // Day8();
+        Day9();
     }
 
     #region Day 1
@@ -698,9 +699,142 @@ public static class Program
 
     #region Day 8
 
+    private class ForestGrid
+    {
+        private int[][] _grid;
+        public ForestGrid(int length)
+        {
+            _grid = new int[length][];
+            for (var i = 0; i < length; i++)
+            {
+                _grid[i] = new int[length];
+            }
+        }
+
+        public void PopulateGrid(string[] input)
+        {
+            var currentIndex = 0;
+            foreach (var inputLine in input)
+            {
+                for (var i = 0; i < inputLine.Length; i++)
+                {
+                    _grid[currentIndex][i] = inputLine[i] - '0';
+                }
+                currentIndex++;
+            }
+        }
+
+        public string Print()
+        {
+            var strBuilder = new StringBuilder();
+            foreach (var line in _grid)
+            {
+                strBuilder.AppendLine(string.Join(" ", line));
+            }
+            return strBuilder.ToString();
+        }
+
+        public int CalculateTreesVisibleFromOutside(out int highestScenicScore)
+        {
+            var edgeTrees = _grid.Length * 2 + (_grid.Length - 2) * 2;
+            var visibleTreesHashset = new HashSet<(int, int)>();
+            highestScenicScore = 0;
+
+            for (var i = 1; i < _grid.Length - 1; i++)
+            {
+                for (var j = 1; j < _grid.Length - 1; j++)
+                {
+                    var isVisableFromWest = IsVisableFromWest(i, j, out var westScenicScore);
+                    var isVisableFromEast = IsVisableFromEast(i, j, out var eastScenicScore);
+                    var isVisableFromNorth = IsVisableFromNorth(j, i, out var northScenicScore);
+                    var isVisableFromSouth = IsVisableFromSouth(j, i, out var southScenicScore);
+
+                    if (isVisableFromWest || isVisableFromEast || isVisableFromNorth || isVisableFromSouth)
+                    {
+                        // Console.WriteLine("Added: {0},{1}", i, j);
+                        visibleTreesHashset.Add((i, j));
+                    }
+
+                    var calculatedScenicScore = westScenicScore * eastScenicScore * northScenicScore * southScenicScore;
+                    // Console.WriteLine($"({i},{j}) N: {northScenicScore}, S: {southScenicScore}, E: {eastScenicScore}, W: {westScenicScore}, Score: {calculatedScenicScore}");
+                    if (calculatedScenicScore > highestScenicScore)
+                        highestScenicScore = calculatedScenicScore;
+                }
+            }
+            // Console.WriteLine("HashSet Count: {0}", visibleTreesHashset.Count);
+            return edgeTrees + visibleTreesHashset.Count;
+        }
+
+        private bool IsVisableFromWest(int rowIndex, int endIndex, out int scenicScore)
+        {
+            scenicScore = 0;
+            for (var i = endIndex - 1; i >= 0; i--)
+            {
+                scenicScore++;
+                // Console.WriteLine($"West [{rowIndex}{endIndex}] {_grid[rowIndex][i]} >= {_grid[rowIndex][endIndex]}");
+                if (_grid[rowIndex][i] >= _grid[rowIndex][endIndex])
+                    return false;
+            }
+            return true;
+        }
+
+        private bool IsVisableFromEast(int rowIndex, int startIndex, out int scenicScore)
+        {
+            scenicScore = 0;
+            for (var i = startIndex + 1; i < _grid.Length; i++)
+            {
+                scenicScore++;
+                // Console.WriteLine($"East [{rowIndex}{startIndex}] {_grid[rowIndex][startIndex]} =< {_grid[rowIndex][i]}");
+                if (_grid[rowIndex][startIndex] <= _grid[rowIndex][i])
+                    return false;
+            }
+            return true;
+        }
+
+        private bool IsVisableFromNorth(int columnIndex, int endIndex, out int scenicScore)
+        {
+            scenicScore = 0;
+            for (var i = endIndex - 1; i >= 0; i--)
+            {
+                scenicScore++;
+                // Console.WriteLine($"North [{endIndex}{columnIndex}] {_grid[i][columnIndex]} >= {_grid[endIndex][columnIndex]}");
+                if (_grid[i][columnIndex] >= _grid[endIndex][columnIndex])
+                    return false;
+            }
+            return true;
+        }
+
+        private bool IsVisableFromSouth(int columnIndex, int startIndex, out int scenicScore)
+        {
+            scenicScore = 0;
+            for (var i = startIndex + 1; i < _grid.Length; i++)
+            {
+                scenicScore++;
+                // Console.WriteLine($"South [{startIndex}{columnIndex}] {_grid[startIndex][columnIndex]} <= {_grid[i][columnIndex]}");
+                if (_grid[startIndex][columnIndex] <= _grid[i][columnIndex])
+                    return false;
+            }
+            return true;
+        }
+    }
+
     public static void Day8()
     {
         var input8 = Utils.ReadInput("./2022/8.txt");
+        var forestGrid = new ForestGrid(input8[0].Length);
+        forestGrid.PopulateGrid(input8);
+        // Console.WriteLine(forestGrid.Print());
+        Console.WriteLine("Output 8.1: {0}", forestGrid.CalculateTreesVisibleFromOutside(out var highestScenicScore));
+        Console.WriteLine("Output 8.2: {0}", highestScenicScore);
+    }
+
+    #endregion
+
+    #region Day 9
+
+    public static void Day9()
+    {
+        var input9 = Utils.ReadInput("./2022/9.txt");
     }
 
     #endregion
