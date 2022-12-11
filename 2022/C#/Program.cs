@@ -1,4 +1,5 @@
 ﻿using AdventOfCode;
+using System.Diagnostics;
 using System.Text;
 
 public static class Program
@@ -13,7 +14,8 @@ public static class Program
         // Day6();
         // Day7();
         // Day8();
-        Day9();
+        // Day9();
+        Day10();
     }
 
     #region Day 1
@@ -832,9 +834,232 @@ public static class Program
 
     #region Day 9
 
+    private class Knot
+    {
+        public Position Head;
+        public Position Tail;
+
+        public Knot(Position head)
+        {
+            Head = head;
+            Tail = new Position(0, 0);
+        }
+    }
+
+    private class Position
+    {
+        public int X;
+        public int Y;
+
+        public Position(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public void MoveUp()
+        {
+            X += 1;
+        }
+
+        public void MoveDown()
+        {
+            X -= 1;
+        }
+
+        public void MoveRight()
+        {
+            Y += 1;
+        }
+
+        public void MoveLeft()
+        {
+            Y -= 1;
+        }
+
+        public int GetHightestCoordinate()
+        {
+            var x = Math.Abs(X);
+            var y = Math.Abs(Y);
+            return x > y ? x : y;
+        }
+    }
+
+    private static void MoveTail(Position tail, Position head, HashSet<(int, int)>? tailVisitedPositions = null)
+    {
+        var deltaX = head.X - tail.X;
+        var deltaY = head.Y - tail.Y;
+
+        if (deltaX == 0)
+        {
+            if (deltaY == 2)
+                tail.MoveRight();
+            else if (deltaY == -2)
+                tail.MoveLeft();
+        }
+        else if (deltaY == 0)
+        {
+            if (deltaX == 2)
+                tail.MoveUp();
+            else if (deltaX == -2)
+                tail.MoveDown();
+        }
+        else if (deltaX == 2)
+        {
+            tail.MoveUp();
+            if (deltaY > 0)
+                tail.MoveRight();
+            else
+                tail.MoveLeft();
+        }
+        else if (deltaX == -2)
+        {
+            tail.MoveDown();
+            if (deltaY > 0)
+                tail.MoveRight();
+            else
+                tail.MoveLeft();
+        }
+        else if (deltaY == 2)
+        {
+            tail.MoveRight();
+            if (deltaX > 0)
+                tail.MoveUp();
+            else
+                tail.MoveDown();
+        }
+        else if (deltaY == -2)
+        {
+            tail.MoveLeft();
+            if (deltaX > 0)
+                tail.MoveUp();
+            else
+                tail.MoveDown();
+        }
+        tailVisitedPositions?.Add((tail.X, tail.Y));
+    }
+
+    private static void PrintKnots(IList<Knot> knots)
+    {
+        var grid = new char[MaxGridSize][];
+        for (var i = 0; i < grid.Length; i++)
+        {
+            grid[i] = Enumerable.Repeat('o', MaxGridSize).ToArray();
+        }
+
+        var deltaX = knots.Min(knot =>
+        {
+            return knot.Head.X < knot.Tail.X ? knot.Head.X : knot.Tail.X;
+        });
+        var deltaY = knots.Min(knot =>
+        {
+            return knot.Head.Y < knot.Tail.Y ? knot.Head.Y : knot.Tail.Y;
+        });
+
+        bool negativeIndexes = false;
+        if (deltaX < 0)
+        {
+            deltaX = Math.Abs(deltaX);
+            negativeIndexes = true;
+        }
+        if (deltaY < 0)
+        {
+            deltaY = Math.Abs(deltaY);
+            negativeIndexes = true;
+        }
+
+        for (var i = knots.Count - 1; i >= 0; i--)
+        {
+            if (negativeIndexes)
+            {
+                if (i != knots.Count - 1)
+                    grid[knots[i].Tail.X + deltaX][knots[i].Tail.Y + deltaY] = Convert.ToChar(48 + i + 1);
+                grid[knots[i].Head.X + deltaX][knots[i].Head.Y + deltaY] = Convert.ToChar(48 + i);
+            }
+            else
+            {
+                if (i != knots.Count - 1)
+                    grid[knots[i].Tail.X][knots[i].Tail.Y] = Convert.ToChar(48 + i + 1);
+                grid[knots[i].Head.X][knots[i].Head.Y] = Convert.ToChar(48 + i);
+            }
+        }
+
+        var strBuilder = new StringBuilder();
+        for (var i = MaxGridSize - 1; i >= 0; i--)
+        {
+            var format = string.Join(' ', grid[i]);
+            strBuilder.AppendLine(format);
+        }
+        Console.WriteLine(strBuilder.ToString());
+    }
+
+    private static void ProcessMove(string move, IList<Knot> knots, HashSet<(int, int)> tailVisitedPositions)
+    {
+        var moveDirection = move[0];
+        var movesCount = int.Parse(move.Substring(2, move.Length - 2));
+        for (var i = 0; i < movesCount; i++)
+        {
+            switch (moveDirection)
+            {
+                case 'U':
+                    knots[0].Head.MoveUp();
+                    break;
+                case 'D':
+                    knots[0].Head.MoveDown();
+                    break;
+                case 'L':
+                    knots[0].Head.MoveLeft();
+                    break;
+                case 'R':
+                    knots[0].Head.MoveRight();
+                    break;
+            }
+            for(var j = 0; j < knots.Count; j++)
+            {
+                if (j == knots.Count - 2)
+                    MoveTail(knots[j].Tail, knots[j].Head, tailVisitedPositions);
+                else
+                    MoveTail(knots[j].Tail, knots[j].Head, null);
+            }
+        }
+    }
+
+    private static int CalculateTailVisitedPositions(int numKnots, string[] input)
+    {
+        var tailVisitedPositions = new HashSet<(int, int)>();
+        var knots = new List<Knot>();
+        var currentHead = new Position(0, 0);
+        for (var i = 0; i < numKnots; i++)
+        {
+            knots.Add(new Knot(currentHead));
+            currentHead = knots[i].Tail;
+        }
+        foreach (var line in input)
+        {
+            ProcessMove(line, knots, tailVisitedPositions);
+            // Only use the grid print on example, it throws IndexOutOfBounds on the puzzle because the MaxGridSize is too low.
+            // PrintKnots(knots);
+        }
+
+        return tailVisitedPositions.Count;
+    }
+
+    static int MaxGridSize = 30;
     public static void Day9()
     {
         var input9 = Utils.ReadInput("./2022/9.txt");
+        
+        Console.WriteLine("Output 9.1: {0}", CalculateTailVisitedPositions(1, input9));
+        Console.WriteLine("Output 9.2: {0}", CalculateTailVisitedPositions(10, input9));
+    }
+
+    #endregion
+
+    #region Day 10
+
+    public static void Day10()
+    {
+        var input10 = Utils.ReadInput("./2022/10.txt");
     }
 
     #endregion
