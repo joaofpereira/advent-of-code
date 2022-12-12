@@ -14,7 +14,8 @@ public static class Program
         // Day7();
         // Day8();
         // Day9();
-        Day10();
+        // Day10();
+        Day11();
     }
 
     #region Day 1
@@ -1056,9 +1057,140 @@ public static class Program
 
     #region Day 10
 
+    private class CrtRow
+    {
+        public int MinCycleNumber;
+        public int MaxCycleNumber;
+
+        public char[] PixelsRow = Enumerable.Repeat(' ', 40).ToArray();
+
+        public CrtRow(int minCycleNumber, int maxCycleNumber)
+        {
+            MinCycleNumber = minCycleNumber;
+            MaxCycleNumber = maxCycleNumber;
+        }
+
+        public void DrawPixel(int pixelIndex, char charToDraw)
+        {
+            PixelsRow[pixelIndex] = charToDraw;
+        }
+
+        public override string ToString()
+        {
+            return string.Join("", PixelsRow);
+        }
+    }
+
     public static void Day10()
     {
+        void CheckIfCycleWasReached(List<int> cyclesPositions, List<int> cyclesStrengths, int currentCycle, int currentRegisterXValue)
+        {
+            if (cyclesPositions.Count == 0) return;
+
+            var minCycleRequired = cyclesPositions[0];
+            if (currentCycle == minCycleRequired)
+            {
+                var cycleStrength = minCycleRequired * currentRegisterXValue;
+                // Console.WriteLine("Cycle {0}, RegisterX: {1}, Strength: {2}", minCycleRequired, currentRegisterXValue, cycleStrength);
+                cyclesPositions.RemoveAt(0);
+                cyclesStrengths.Add(cycleStrength);
+            }
+        }
+
+        CrtRow? GetCorrectCrtRowBasedOnCycleNumber(CrtRow[] crtRows, int cycleNumber)
+        {
+            foreach (var crtRow in crtRows)
+            {
+                if (crtRow.MinCycleNumber <= cycleNumber && crtRow.MaxCycleNumber >= cycleNumber)
+                    return crtRow;
+            }
+            return null;
+        }
+
+        char GetCorrectCharBasedOnPosition(int position, (int Min, int Max) spritePosition)
+        {
+            if (position >= spritePosition.Min && position <= spritePosition.Max)
+                return '#';
+            return '.';
+        }
+
         var input10 = Utils.ReadInput("./2022/10.txt");
+        var registerX = 1;
+        var cycleNumber = 0;
+
+        var cyclesPositions = new List<int>() { 20, 60, 100, 140, 180, 220 };
+        var cyclesStrengths = new List<int>();
+
+        (int MinSpritePos, int MaxSpritePos) spritePos = (1, 3);
+
+        var crtRows = new CrtRow[6];
+        for (var i = 0; i < 6; i++)
+        {
+            crtRows[i] = new CrtRow((i * 40) + 1, (i * 40) + 40);
+            // Console.WriteLine("CRT {0}: {1}-{2}", i, crtRows[i].MinCycleNumber, crtRows[i].MaxCycleNumber);
+        }
+
+        var checkForCycleStrengths = true;
+        foreach(var line in input10)
+        {
+            int position;
+            var parts = line.Split(" ");
+            switch (parts[0])
+            {
+                case "noop":
+                    cycleNumber++;
+                    position = (cycleNumber % 40) == 0 ? 40 : (cycleNumber % 40);
+                    GetCorrectCrtRowBasedOnCycleNumber(crtRows, cycleNumber)?.DrawPixel(position - 1, GetCorrectCharBasedOnPosition(position, spritePos));
+                    if (checkForCycleStrengths)
+                        CheckIfCycleWasReached(cyclesPositions, cyclesStrengths, cycleNumber, registerX);
+                    break;
+                case "addx":
+                    // first cycle of addx
+                    cycleNumber++;
+                    position = (cycleNumber % 40) == 0 ? 40 : (cycleNumber % 40);
+                    GetCorrectCrtRowBasedOnCycleNumber(crtRows, cycleNumber)?.DrawPixel(position - 1, GetCorrectCharBasedOnPosition(position, spritePos));
+                    if (checkForCycleStrengths)
+                        CheckIfCycleWasReached(cyclesPositions, cyclesStrengths, cycleNumber, registerX);
+                    
+                    // second cycle of addx
+                    cycleNumber++;
+                    position = (cycleNumber % 40) == 0 ? 40 : (cycleNumber % 40);
+                    GetCorrectCrtRowBasedOnCycleNumber(crtRows, cycleNumber)?.DrawPixel(position - 1, GetCorrectCharBasedOnPosition(position, spritePos));
+                    if (checkForCycleStrengths)
+                        CheckIfCycleWasReached(cyclesPositions, cyclesStrengths, cycleNumber, registerX);
+                    
+                    var addXValue = int.Parse(parts[1]);
+                    registerX += addXValue;
+
+                    spritePos.MinSpritePos += addXValue;
+                    spritePos.MaxSpritePos += addXValue;
+                    break;
+            }
+
+            if (cyclesPositions.Count == 0)
+            {
+                checkForCycleStrengths = false;
+            }
+        }
+
+        Console.WriteLine("Output 10.1: {0}", cyclesStrengths.Aggregate((first, second) => first + second));
+
+        var strBuilder = new StringBuilder();
+        foreach(var crtRow in crtRows)
+        {
+            strBuilder.AppendLine(crtRow.ToString());
+        }
+
+        Console.WriteLine("Output 10.2:\n\n{0}", strBuilder.ToString());
+    }
+
+    #endregion
+
+    #region Day 11
+
+    public static void Day11()
+    {
+        var input11 = Utils.ReadInput("./2022/11.txt");
     }
 
     #endregion
