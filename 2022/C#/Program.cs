@@ -1,4 +1,5 @@
 ﻿using AdventOfCode;
+using System.Numerics;
 using System.Text;
 
 public static class Program
@@ -1188,9 +1189,290 @@ public static class Program
 
     #region Day 11
 
+    private enum OperatorEnum
+    {
+        Sum,
+        Sub,
+        Mul,
+        Div
+    }
+
+    private class Operation
+    {
+        public OperatorEnum Operator;
+        public string LeftSide;
+        public string RightSide;
+
+        public Operation(string leftSide, string rightSide, OperatorEnum operatorEnum)
+        {
+            LeftSide = leftSide;
+            RightSide = rightSide;
+            Operator = operatorEnum;
+        }
+
+        public BigInteger Calculate(string previous)
+        {
+            string left = !string.IsNullOrWhiteSpace(LeftSide) ? LeftSide : previous;
+            string right = !string.IsNullOrWhiteSpace(RightSide) ? RightSide : previous;
+            switch (Operator)
+            {
+                case OperatorEnum.Sum:
+                    return Sum(left, right);
+                //case OperatorEnum.Sub:
+                //    return Sub(left, right);
+                case OperatorEnum.Mul:
+                    return Mul(left, right);
+                //case OperatorEnum.Div:
+                //    return Div(left, right);
+                default:
+                    return 0;
+            }
+        }
+
+        private string Sum(string left, string right)
+        {
+            int len1 = left.Length;
+            int len2 = right.Length;
+            if (len1 == 0) return right;
+            if (len2 == 0) return left;
+
+            // the length of the result will be at least the length of the larger number plus 1
+            int resultLength = len1 > len2 ? len1 + 1 : len2 + 1;
+            int[] result = new int[resultLength];
+
+            int carry = 0;
+            for (var i_n1 = len1 - 1; i_n1 >= 0; i_n1--)
+            {
+                if (i_n1 > len2 - 1) 
+            }
+        }
+        private BigInteger Sub(BigInteger left, BigInteger right) => left - right;
+        private string Mul(string left, string right)
+        {
+            int len1 = left.Length;
+            int len2 = right.Length;
+            if (len1 == 0 || len2 == 0)
+                return "0";
+
+            // will keep the result number in vector
+            // in reverse order
+            int[] result = new int[len1 + len2];
+
+            // Below two indexes are used to
+            // find positions in result.
+            int i_n1 = 0;
+            int i;
+
+            // Go from right to left in num1
+            for (i = len1 - 1; i >= 0; i--)
+            {
+                int carry = 0;
+                int n1 = left[i] - '0';
+
+                // To shift position to left after every
+                // multipliccharAtion of a digit in num2
+                var i_n2 = 0;
+
+                // Go from right to left in num2            
+                for (int j = len2 - 1; j >= 0; j--)
+                {
+                    // Take current digit of second number
+                    int n2 = right[j] - '0';
+
+                    // Multiply with current digit of first number
+                    // and add result to previously stored result
+                    // charAt current position.
+                    int sum = n1 * n2 + result[i_n1 + i_n2] + carry;
+
+                    // Carry for next itercharAtion
+                    carry = sum / 10;
+
+                    // Store result
+                    result[i_n1 + i_n2] = sum % 10;
+
+                    i_n2++;
+                }
+
+                // store carry in next cell
+                if (carry > 0)
+                    result[i_n1 + i_n2] += carry;
+
+                // To shift position to left after every
+                // multipliccharAtion of a digit in num1.
+                i_n1++;
+            }
+
+            // ignore '0's from the right
+            i = result.Length - 1;
+            while (i >= 0 && result[i] == 0)
+                i--;
+
+            // If all were '0's - means either both
+            // or one of num1 or num2 were '0'
+            if (i == -1)
+                return "0";
+
+            // genercharAte the result String
+            String s = "";
+
+            while (i >= 0)
+                s += (result[i--]);
+
+            return s;
+        }
+
+        private BigInteger Div(BigInteger left, BigInteger right) => left / right;
+    }
+
+    private class Monkey
+    {
+        public int Number;
+        public List<BigInteger> Items;
+        public Operation Operation { get; set; }
+        public int Test { get; set; }
+        public int ThrowToMonkeyTrue { get; set; }
+        public int ThrowToMonkeyFalse { get; set; }
+        public int NumberOfInspectedItems;
+
+        public Monkey(int number)
+        {
+            Number = number;
+            Items = new List<BigInteger>();
+            NumberOfInspectedItems = 0;
+        }
+
+        public void AddItem(BigInteger itemNumber)
+        {
+            Items.Add(itemNumber);
+        }
+
+        public void ThrowItem(BigInteger oldItemWorryLevel, BigInteger newItemWorryLevel, Monkey to)
+        {
+            Items.Remove(oldItemWorryLevel);
+            to.AddItem(newItemWorryLevel);
+            // Console.WriteLine("Monkey {0} threw item {1} to monkey {2} with new worry level of {3}.", Number, oldItemWorryLevel, to.Number, newItemWorryLevel);
+        }
+
+        public void InspectItem(List<Monkey> monkeys, bool ignoreItemDamage)
+        {
+            if (Items.Count == 0) return;
+            NumberOfInspectedItems++;
+            var itemWorryLevel = Items.First();
+            var operationWorryLevel = Operation.Calculate(itemWorryLevel);
+            var monkeyGetsBoredWorryLevel = ignoreItemDamage ? operationWorryLevel : operationWorryLevel / 3;
+            if (monkeyGetsBoredWorryLevel % Test == 0)
+                ThrowItem(itemWorryLevel, monkeyGetsBoredWorryLevel, monkeys[ThrowToMonkeyTrue]);
+            else
+                ThrowItem(itemWorryLevel, monkeyGetsBoredWorryLevel, monkeys[ThrowToMonkeyFalse]);
+        }
+    }
+
+    private static List<Monkey> SetupMonkeys(string[] input)
+    {
+        var monkeys = new List<Monkey>();
+        Monkey currentMonkey = null;
+        foreach (var line in input)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            var parts = line.Split(':');
+            if (string.IsNullOrWhiteSpace(parts[1]))
+            {
+                var monkeyNumber = parts[0][parts[0].Length - 1] - '0';
+                currentMonkey = new Monkey(monkeyNumber);
+            }
+            else
+            {
+                switch (parts[0])
+                {
+                    case "  Starting items":
+                        parts[1].Split(',').ToList().ForEach(p => currentMonkey?.AddItem(int.Parse(p.Trim())));
+                        break;
+                    case "  Operation":
+                        var operationElements = parts[1].TrimStart().Split(' ');
+                        var left = operationElements[2] == "old" ? default(int?) : int.Parse(operationElements[2]);
+                        var right = operationElements[4] == "old" ? default(int?) : int.Parse(operationElements[4]);
+                        OperatorEnum op = OperatorEnum.Sum;
+                        switch (operationElements[3])
+                        {
+                            case "+":
+                                op = OperatorEnum.Sum;
+                                break;
+                            case "-":
+                                op = OperatorEnum.Sub;
+                                break;
+                            case "*":
+                                op = OperatorEnum.Mul;
+                                break;
+                            case "/":
+                                op = OperatorEnum.Div;
+                                break;
+                        }
+                        currentMonkey.Operation = new Operation(left, right, op);
+                        break;
+                    case "  Test":
+                        var testElements = parts[1].TrimStart().Split(' ');
+                        currentMonkey.Test = int.Parse(testElements[2]);
+                        break;
+                    case "    If true":
+                        currentMonkey.ThrowToMonkeyTrue = parts[1][parts[1].Length - 1] - '0';
+                        break;
+                    case "    If false":
+                        currentMonkey.ThrowToMonkeyFalse = parts[1][parts[1].Length - 1] - '0';
+                        monkeys.Add(currentMonkey);
+                        break;
+                }
+            }
+        }
+
+        return monkeys;
+    }
+
+    private static void PrintMonkeysFinalResults(IList<Monkey> monkeys)
+    {
+        foreach(var monkey in monkeys)
+        {
+            Console.WriteLine("Monkey {0} inspected items {1} times.", monkey.Number, monkey.NumberOfInspectedItems);
+        }
+    }
+
     public static void Day11()
     {
         var input11 = Utils.ReadInput("./2022/11.txt");
+        var monkeys = SetupMonkeys(input11);
+
+        var rounds = 0;
+        while (rounds < 20)
+        {
+            foreach(var monkey in monkeys)
+            {
+                var itemsPossessedByMonkey = monkey.Items.Count;
+                for (var i = 0; i < itemsPossessedByMonkey; i++)
+                    monkey.InspectItem(monkeys, false);
+            }
+            rounds++;
+        }
+
+        // PrintMonkeysFinalResults(monkeys);
+        Console.WriteLine("Output 11.1: {0}", monkeys.OrderByDescending(m => m.NumberOfInspectedItems).Take(2).Select(m => m.NumberOfInspectedItems).Aggregate((a, b) => a * b));
+
+        monkeys = SetupMonkeys(input11);
+        rounds = 0;
+        while (rounds < 10000)
+        {
+            foreach (var monkey in monkeys)
+            {
+                var itemsPossessedByMonkey = monkey.Items.Count;
+                for (var i = 0; i < itemsPossessedByMonkey; i++)
+                    monkey.InspectItem(monkeys, true);
+            }
+            rounds++;
+            
+            if (rounds % 100 == 0)
+                Console.WriteLine("Round {0}", rounds);
+            //PrintMonkeysFinalResults(monkeys);
+        }
+
+        Console.WriteLine("Output 11.2: {0}", monkeys.OrderByDescending(m => m.NumberOfInspectedItems).Take(2).Select(m => m.NumberOfInspectedItems).Aggregate((a, b) => a * b));
     }
 
     #endregion
