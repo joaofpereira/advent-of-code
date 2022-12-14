@@ -1200,20 +1200,20 @@ public static class Program
     private class Operation
     {
         public OperatorEnum Operator;
-        public string LeftSide;
-        public string RightSide;
+        public ulong? LeftSide;
+        public ulong? RightSide;
 
-        public Operation(string leftSide, string rightSide, OperatorEnum operatorEnum)
+        public Operation(ulong? leftSide, ulong? rightSide, OperatorEnum operatorEnum)
         {
             LeftSide = leftSide;
             RightSide = rightSide;
             Operator = operatorEnum;
         }
 
-        public BigInteger Calculate(string previous)
+        public ulong Calculate(ulong previous)
         {
-            string left = !string.IsNullOrWhiteSpace(LeftSide) ? LeftSide : previous;
-            string right = !string.IsNullOrWhiteSpace(RightSide) ? RightSide : previous;
+            var left = LeftSide.HasValue ? LeftSide.Value : previous;
+            var right = RightSide.HasValue ? RightSide.Value : previous;
             switch (Operator)
             {
                 case OperatorEnum.Sum:
@@ -1229,97 +1229,99 @@ public static class Program
             }
         }
 
-        private string Sum(string left, string right)
-        {
-            int len1 = left.Length;
-            int len2 = right.Length;
-            if (len1 == 0) return right;
-            if (len2 == 0) return left;
+        //private string Sum(string left, string right)
+        //{
+        //    int len1 = left.Length;
+        //    int len2 = right.Length;
+        //    if (len1 == 0) return right;
+        //    if (len2 == 0) return left;
 
-            // the length of the result will be at least the length of the larger number plus 1
-            int resultLength = len1 > len2 ? len1 + 1 : len2 + 1;
-            int[] result = new int[resultLength];
+        //    // the length of the result will be at least the length of the larger number plus 1
+        //    int resultLength = len1 > len2 ? len1 + 1 : len2 + 1;
+        //    int[] result = new int[resultLength];
 
-            int carry = 0;
-            for (var i_n1 = len1 - 1; i_n1 >= 0; i_n1--)
-            {
-                if (i_n1 > len2 - 1) 
-            }
-        }
+        //    int carry = 0;
+        //    for (var i_n1 = len1 - 1; i_n1 >= 0; i_n1--)
+        //    {
+        //        if (i_n1 > len2 - 1) 
+        //    }
+        //}
+        private ulong Sum(ulong left, ulong right) => left + right;
         private BigInteger Sub(BigInteger left, BigInteger right) => left - right;
-        private string Mul(string left, string right)
-        {
-            int len1 = left.Length;
-            int len2 = right.Length;
-            if (len1 == 0 || len2 == 0)
-                return "0";
+        private ulong Mul(ulong left, ulong right) => left * right;
+        //private string Mul(string left, string right)
+        //{
+        //    int len1 = left.Length;
+        //    int len2 = right.Length;
+        //    if (len1 == 0 || len2 == 0)
+        //        return "0";
 
-            // will keep the result number in vector
-            // in reverse order
-            int[] result = new int[len1 + len2];
+        //    // will keep the result number in vector
+        //    // in reverse order
+        //    int[] result = new int[len1 + len2];
 
-            // Below two indexes are used to
-            // find positions in result.
-            int i_n1 = 0;
-            int i;
+        //    // Below two indexes are used to
+        //    // find positions in result.
+        //    int i_n1 = 0;
+        //    int i;
 
-            // Go from right to left in num1
-            for (i = len1 - 1; i >= 0; i--)
-            {
-                int carry = 0;
-                int n1 = left[i] - '0';
+        //    // Go from right to left in num1
+        //    for (i = len1 - 1; i >= 0; i--)
+        //    {
+        //        int carry = 0;
+        //        int n1 = left[i] - '0';
 
-                // To shift position to left after every
-                // multipliccharAtion of a digit in num2
-                var i_n2 = 0;
+        //        // To shift position to left after every
+        //        // multipliccharAtion of a digit in num2
+        //        var i_n2 = 0;
 
-                // Go from right to left in num2            
-                for (int j = len2 - 1; j >= 0; j--)
-                {
-                    // Take current digit of second number
-                    int n2 = right[j] - '0';
+        //        // Go from right to left in num2            
+        //        for (int j = len2 - 1; j >= 0; j--)
+        //        {
+        //            // Take current digit of second number
+        //            int n2 = right[j] - '0';
 
-                    // Multiply with current digit of first number
-                    // and add result to previously stored result
-                    // charAt current position.
-                    int sum = n1 * n2 + result[i_n1 + i_n2] + carry;
+        //            // Multiply with current digit of first number
+        //            // and add result to previously stored result
+        //            // charAt current position.
+        //            int sum = n1 * n2 + result[i_n1 + i_n2] + carry;
 
-                    // Carry for next itercharAtion
-                    carry = sum / 10;
+        //            // Carry for next itercharAtion
+        //            carry = sum / 10;
 
-                    // Store result
-                    result[i_n1 + i_n2] = sum % 10;
+        //            // Store result
+        //            result[i_n1 + i_n2] = sum % 10;
 
-                    i_n2++;
-                }
+        //            i_n2++;
+        //        }
 
-                // store carry in next cell
-                if (carry > 0)
-                    result[i_n1 + i_n2] += carry;
+        //        // store carry in next cell
+        //        if (carry > 0)
+        //            result[i_n1 + i_n2] += carry;
 
-                // To shift position to left after every
-                // multipliccharAtion of a digit in num1.
-                i_n1++;
-            }
+        //        // To shift position to left after every
+        //        // multipliccharAtion of a digit in num1.
+        //        i_n1++;
+        //    }
 
-            // ignore '0's from the right
-            i = result.Length - 1;
-            while (i >= 0 && result[i] == 0)
-                i--;
+        //    // ignore '0's from the right
+        //    i = result.Length - 1;
+        //    while (i >= 0 && result[i] == 0)
+        //        i--;
 
-            // If all were '0's - means either both
-            // or one of num1 or num2 were '0'
-            if (i == -1)
-                return "0";
+        //    // If all were '0's - means either both
+        //    // or one of num1 or num2 were '0'
+        //    if (i == -1)
+        //        return "0";
 
-            // genercharAte the result String
-            String s = "";
+        //    // genercharAte the result String
+        //    String s = "";
 
-            while (i >= 0)
-                s += (result[i--]);
+        //    while (i >= 0)
+        //        s += (result[i--]);
 
-            return s;
-        }
+        //    return s;
+        //}
 
         private BigInteger Div(BigInteger left, BigInteger right) => left / right;
     }
@@ -1327,9 +1329,9 @@ public static class Program
     private class Monkey
     {
         public int Number;
-        public List<BigInteger> Items;
+        public List<ulong> Items;
         public Operation Operation { get; set; }
-        public int Test { get; set; }
+        public ulong Test { get; set; }
         public int ThrowToMonkeyTrue { get; set; }
         public int ThrowToMonkeyFalse { get; set; }
         public int NumberOfInspectedItems;
@@ -1337,16 +1339,16 @@ public static class Program
         public Monkey(int number)
         {
             Number = number;
-            Items = new List<BigInteger>();
+            Items = new List<ulong>();
             NumberOfInspectedItems = 0;
         }
 
-        public void AddItem(BigInteger itemNumber)
+        public void AddItem(ulong itemNumber)
         {
             Items.Add(itemNumber);
         }
 
-        public void ThrowItem(BigInteger oldItemWorryLevel, BigInteger newItemWorryLevel, Monkey to)
+        public void ThrowItem(ulong oldItemWorryLevel, ulong newItemWorryLevel, Monkey to)
         {
             Items.Remove(oldItemWorryLevel);
             to.AddItem(newItemWorryLevel);
@@ -1385,12 +1387,12 @@ public static class Program
                 switch (parts[0])
                 {
                     case "  Starting items":
-                        parts[1].Split(',').ToList().ForEach(p => currentMonkey?.AddItem(int.Parse(p.Trim())));
+                        parts[1].Split(',').ToList().ForEach(p => currentMonkey?.AddItem(ulong.Parse(p.Trim())));
                         break;
                     case "  Operation":
                         var operationElements = parts[1].TrimStart().Split(' ');
-                        var left = operationElements[2] == "old" ? default(int?) : int.Parse(operationElements[2]);
-                        var right = operationElements[4] == "old" ? default(int?) : int.Parse(operationElements[4]);
+                        var left = operationElements[2] == "old" ? default(ulong?) : ulong.Parse(operationElements[2]);
+                        var right = operationElements[4] == "old" ? default(ulong?) : ulong.Parse(operationElements[4]);
                         OperatorEnum op = OperatorEnum.Sum;
                         switch (operationElements[3])
                         {
@@ -1411,7 +1413,7 @@ public static class Program
                         break;
                     case "  Test":
                         var testElements = parts[1].TrimStart().Split(' ');
-                        currentMonkey.Test = int.Parse(testElements[2]);
+                        currentMonkey.Test = ulong.Parse(testElements[2]);
                         break;
                     case "    If true":
                         currentMonkey.ThrowToMonkeyTrue = parts[1][parts[1].Length - 1] - '0';
@@ -1452,7 +1454,7 @@ public static class Program
             rounds++;
         }
 
-        // PrintMonkeysFinalResults(monkeys);
+        PrintMonkeysFinalResults(monkeys);
         Console.WriteLine("Output 11.1: {0}", monkeys.OrderByDescending(m => m.NumberOfInspectedItems).Take(2).Select(m => m.NumberOfInspectedItems).Aggregate((a, b) => a * b));
 
         monkeys = SetupMonkeys(input11);
@@ -1466,12 +1468,12 @@ public static class Program
                     monkey.InspectItem(monkeys, true);
             }
             rounds++;
-            
+
             if (rounds % 100 == 0)
                 Console.WriteLine("Round {0}", rounds);
-            //PrintMonkeysFinalResults(monkeys);
         }
 
+        PrintMonkeysFinalResults(monkeys);
         Console.WriteLine("Output 11.2: {0}", monkeys.OrderByDescending(m => m.NumberOfInspectedItems).Take(2).Select(m => m.NumberOfInspectedItems).Aggregate((a, b) => a * b));
     }
 
